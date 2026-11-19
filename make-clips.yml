@@ -1,0 +1,44 @@
+name: make-clips
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Lien du VOD Kick"
+        required: true
+        default: "https://kick.com/ilyaselmaliki/videos/01a1ee92-1328-7199-a8f0-6e52ef0657d4"
+      n_clips:
+        description: "Nombre de clips"
+        required: true
+        default: "10"
+      clip_sec:
+        description: "Duree d'un clip (secondes)"
+        required: true
+        default: "35"
+
+jobs:
+  clips:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Installer les outils
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-noto-core fonts-noto-ui-core
+          pip install -U yt-dlp faster-whisper numpy
+      - name: Telecharger, decouper, sous-titrer
+        env:
+          VOD_URL: ${{ github.event.inputs.url }}
+          N_CLIPS: ${{ github.event.inputs.n_clips }}
+          CLIP_SEC: ${{ github.event.inputs.clip_sec }}
+          M3U8: "https://stream.kick.com/3c81249a5ce0/ivs/v1/196233775518/vh3NBAEh0nRE/2026/11/18/12/11/hMBYz4ARDIUi/media/hls/master.m3u8"
+        run: python make_clips.py
+      - name: Publier les clips
+        uses: actions/upload-artifact@v4
+        with:
+          name: clips-tiktok-instagram
+          path: clips/
